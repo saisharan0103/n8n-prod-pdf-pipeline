@@ -1,22 +1,20 @@
-FROM docker.n8n.io/n8nio/n8n:1.59.3
+# n8n stable (recommended)
+FROM docker.n8n.io/n8nio/n8n:2.0.2
 
 USER root
 
-# Install system deps for Python + PDFs
+# ---- System deps (Alpine) ----
 RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    build-base \
-    libffi-dev \
-    poppler-utils
+  python3 \
+  py3-virtualenv \
+  bash
 
-# Allow pip installs (PEP 668 fix)
-RUN python3 -m pip install --upgrade pip \
-    && pip3 install --no-cache-dir --break-system-packages \
-       pdfplumber pandas
+# ---- Create a venv and install pdf libs into it ----
+RUN python3 -m venv /opt/venv \
+  && /opt/venv/bin/pip install --upgrade pip \
+  && /opt/venv/bin/pip install --no-cache-dir pdfplumber
 
-# Create working dirs for n8n file ops
-RUN mkdir -p /tmp/n8n \
-    && chown -R node:node /tmp/n8n
+# Make the venv Python + pip available everywhere (including Execute Command node)
+ENV PATH="/opt/venv/bin:${PATH}"
 
 USER node
